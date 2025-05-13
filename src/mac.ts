@@ -1,5 +1,7 @@
 import { exec, spawnSync } from "child_process";
-
+import fs from 'fs';
+import path from 'path';
+import plist from 'plist';
 export function getInstalledApps(directory:string) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -16,6 +18,43 @@ export function getInstalledApps(directory:string) {
   });
 }
 
+
+const appDirectories = ['/Applications', `${process.env.HOME}/Applications`];
+
+export async function getInstalledApps2(): Promise<{ name: string, publisher?: string }[]> {
+  const apps: { name: string; publisher?: string }[] = [];
+
+  for (const dir of appDirectories) {
+    if (!fs.existsSync(dir)) continue;
+
+    const files = fs.readdirSync(dir);
+
+    for (const file of files) {
+      if (file.endsWith('.app')) {
+        const appPath = path.join(dir, file);
+        const plistPath = path.join(appPath, 'Contents', 'Info.plist');
+
+        let publisher;
+        if (fs.existsSync(plistPath)) {
+          try {
+            const plistContent = fs.readFileSync(plistPath, 'utf8');
+            const info = plist.parse(plistContent) as any;
+            publisher = info?.CFBundleIdentifier || info?.CFBundleName || undefined;
+          } catch {
+            // silently ignore plist parsing errors
+          }
+        }
+
+        apps.push({
+          name: file.replace('.app', ''),
+          publisher,
+        });
+      }
+    }
+  }
+
+  return apps;
+}
 /**
  * getDirectoryContents
  * @param directory
