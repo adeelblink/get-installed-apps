@@ -25,7 +25,8 @@
     "start": "node dist/index.js",
     "example": "node example.js",
     "dev": "npm run start && npm run example",
-    "trypublish": "npm publish || true"
+    "trypublish": "npm publish || true",
+    "postinstall": "tsc"
   },
   "author": "Xutaotaotao",
   "license": "ISC",
